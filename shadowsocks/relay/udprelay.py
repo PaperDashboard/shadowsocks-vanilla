@@ -68,7 +68,9 @@ import struct
 import errno
 import random
 
-from shadowsocks import cryptor, eventloop, lru_cache, common, shell
+from shadowsocks import cryptor, common, shell
+from shadowsocks.event import eventloop
+from shadowsocks.cache import lru_cache
 from shadowsocks.common import parse_header, pack_addr, onetimeauth_verify, \
     onetimeauth_gen, ONETIMEAUTH_BYTES, ADDRTYPE_AUTH
 

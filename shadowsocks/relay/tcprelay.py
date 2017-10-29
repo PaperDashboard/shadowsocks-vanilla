@@ -26,7 +26,8 @@ import logging
 import traceback
 import random
 
-from shadowsocks import cryptor, eventloop, shell, common
+from shadowsocks import cryptor, shell, common
+from shadowsocks.event import eventloop
 from shadowsocks.common import parse_header, onetimeauth_verify, \
     onetimeauth_gen, ONETIMEAUTH_BYTES, ONETIMEAUTH_CHUNK_BYTES, \
     ONETIMEAUTH_CHUNK_DATA_LEN, ADDRTYPE_AUTH
