@@ -68,15 +68,15 @@ class ServerPool(object):
             traceback.print_exc()
             os.exit(0)
 
-    def server_is_run(self, port):
-        port = int(port)
+    def server_is_run(self, user):
+        port = int(user.port)
         if port in self.tcp_servers_pool:
             return True
         return False
 
-    def new_server(self, port, password, method):
+    def new_server(self, user):
         ret = True
-        port = int(port)
+        port = int(user.port)
 
         if port in self.tcp_servers_pool:
             logging.info("server already at %s:%d" % (config.server, port))
@@ -84,13 +84,13 @@ class ServerPool(object):
         else:
             a_config = {
                 "server": config.SERVER,
-                "timeout": 60,
-                "fast_open": False,
-                "method": method,
+                "timeout": config.TIMEOUT,
+                "fast_open": config.FAST_OPEN,
+                "method": user.method,
                 "crypto_path": {}
             }
             a_config['server_port'] = port
-            a_config['password'] = password
+            a_config['password'] = user.password
             try:
                 logging.info("starting server at %s:%d" % (a_config['server'], port))
                 tcp_server = tcprelay.TCPRelay(a_config, self.dns_resolver, False)
@@ -99,22 +99,24 @@ class ServerPool(object):
                 udp_server = udprelay.UDPRelay(a_config, self.dns_resolver, False)
                 udp_server.add_to_loop(self.loop)
                 self.udp_servers_pool.update({port: udp_server})
-
             except Exception, e:
                 logging.warn(e)
         return True
 
-    def del_server(self, port):
-        port = int(port)
+    def del_server(self, user):
+        port = int(user.port)
 
         if port not in self.tcp_servers_pool:
-            logging.info("stopped server at %s:%d already stop" % (config.server, port))
+            logging.info("stopped server at %s:%d already stop" % (config.SERVER, port))
         else:
-            logging.info("stopped server at %s:%d" % (config.server, port))
+            logging.info("stopped server at %s:%d" % (config.SERVER, port))
             try:
                 server = self.tcp_servers_pool[port]
                 del self.tcp_servers_pool[port]
-                server.destroy()
+                server.close()
+                userver = self.udp_servers_pool[port]
+                del self.udp_servers_pool[port]
+                userver.close()
             except Exception, e:
                 logging.warn(e)
             return True

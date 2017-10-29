@@ -1,5 +1,8 @@
 from shadowsocks.event.server_pool import ServerPool
+from shadowsocks.objects.user import User
+import logging
 import time
+
 
 class BaseTransfer(object):
     instance = None
@@ -13,18 +16,28 @@ class BaseTransfer(object):
 
     @staticmethod
     def pull_user():
-        return [{
-            "passwd": "testLink",
+        return [User({
+            "password": "testLink",
             "method": "rc4-md5",
             "port": 1234
-        }]
+        })]
 
-    @staticmethod
-    def run():
-        while True:
-            users = BaseTransfer.get_instance().pull_user();
-            for user in users:
-                if not ServerPool.get_instance().server_is_run(int(user["port"])):
-                    ServerPool.get_instance().new_server(int(user["port"]), user["passwd"], user["method"])
+    def run(self):
+        return run(self)
 
-            time.sleep(60)
+def run(transfer):
+    olderUser = []
+    while True:
+        users = transfer.pull_user();
+
+        for ouser in olderUser:
+            if not ouser in users:
+                ServerPool.get_instance().del_server(ouser)
+        
+        olderUser = users
+        logging.info("polling")
+        for user in users:
+            if not ServerPool.get_instance().server_is_run(user):
+                ServerPool.get_instance().new_server(user)
+
+        time.sleep(10)

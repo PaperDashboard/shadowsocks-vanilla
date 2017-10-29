@@ -1,0 +1,7 @@
+[
+    {
+        "password": "linlTest",
+        "port": 1234,
+        "method": "rc4-md5"
+    }
+]
