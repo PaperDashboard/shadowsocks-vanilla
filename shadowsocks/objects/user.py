@@ -1,8 +1,8 @@
 class User(object):
     def __init__(self, config):
         self.port = int(config["port"])
-        self.password = config["password"]
-        self.method = config["method"]
+        self.password = str(config["password"])
+        self.method = str(config["method"])
 
     
     def __eq__(self, other):
