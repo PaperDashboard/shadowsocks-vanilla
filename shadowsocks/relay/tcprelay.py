@@ -570,6 +570,9 @@ class TCPRelayHandler(object):
         if not data:
             self.destroy()
             return
+
+        self._server.upload_traffic += len(data)
+        
         self._update_activity(len(data))
         if not is_local:
             data = self._cryptor.decrypt(data)
@@ -608,6 +611,9 @@ class TCPRelayHandler(object):
         if not data:
             self.destroy()
             return
+
+        self._server.download_traffic += len(data)
+
         self._update_activity(len(data))
         if self._is_local:
             data = self._cryptor.decrypt(data)
@@ -735,6 +741,9 @@ class TCPRelay(object):
         # we trim the timeouts once a while
         self._timeout_offset = 0   # last checked position for timeout
         self._handler_to_timeouts = {}  # key: handler value: index in timeouts
+        
+        self.upload_traffic = 0L
+        self.download_traffic = 0L
 
         if is_local:
             listen_addr = config['local_address']

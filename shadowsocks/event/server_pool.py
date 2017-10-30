@@ -121,10 +121,18 @@ class ServerPool(object):
                 logging.warn(e)
             return True
 
-    def get_servers_transfer(self):
-        ret = {}
+    def get_port_transfer(self, port):
+        ret = 0L
         #this is different thread but safe
-        servers = self.tcp_servers_pool.copy()
-        for port in servers.keys():
-            ret[port] = [servers[port].server_transfer_ul, servers[port].server_transfer_dl]
+        t_servers = self.tcp_servers_pool.copy()
+        u_servers = self.udp_servers_pool.copy()
+
+        if port in t_servers:
+            ret += t_servers[port].upload_traffic
+            ret += t_servers[port].download_traffic
+
+        if port in u_servers:
+            ret += u_servers[port].upload_traffic
+            ret += u_servers[port].download_traffic
+
         return ret

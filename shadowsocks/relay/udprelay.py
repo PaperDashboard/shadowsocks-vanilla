@@ -119,6 +119,9 @@ class UDPRelay(object):
         self._forbidden_iplist = config.get('forbidden_ip')
         self._crypto_path = config['crypto_path']
 
+        self.upload_traffic = 0L
+        self.download_traffic = 0L
+
         addrs = socket.getaddrinfo(self._listen_addr, self._listen_port, 0,
                                    socket.SOCK_DGRAM, socket.SOL_UDP)
         if len(addrs) == 0:
@@ -258,6 +261,7 @@ class UDPRelay(object):
             return
         try:
             client.sendto(data, (server_addr, server_port))
+            self.upload_traffic += len(data)
         except IOError as e:
             err = eventloop.errno_from_exception(e)
             if err in (errno.EINPROGRESS, errno.EAGAIN):
@@ -311,6 +315,7 @@ class UDPRelay(object):
             logging.debug("send udp response to %s:%d"
                           % (client_addr[0], client_addr[1]))
             self._server_socket.sendto(response, client_addr)
+            self.download_traffic += len(data)
         else:
             # this packet is from somewhere else we know
             # simply drop that packet
