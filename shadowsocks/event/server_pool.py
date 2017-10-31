@@ -128,11 +128,11 @@ class ServerPool(object):
         u_servers = self.udp_servers_pool.copy()
 
         if port in t_servers:
-            ret += t_servers[port].upload_traffic
-            ret += t_servers[port].download_traffic
+            ret += t_servers[port].get_download()
+            ret += t_servers[port].get_upload()
 
         if port in u_servers:
-            ret += u_servers[port].upload_traffic
-            ret += u_servers[port].download_traffic
+            ret += u_servers[port].get_download()
+            ret += u_servers[port].get_upload()
 
         return ret

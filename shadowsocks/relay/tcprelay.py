@@ -27,6 +27,7 @@ import traceback
 import random
 
 from shadowsocks import cryptor, shell, common
+from shadowsocks.trains import traffic_able
 from shadowsocks.event import eventloop
 from shadowsocks.common import parse_header, onetimeauth_verify, \
     onetimeauth_gen, ONETIMEAUTH_BYTES, ONETIMEAUTH_CHUNK_BYTES, \
@@ -571,7 +572,7 @@ class TCPRelayHandler(object):
             self.destroy()
             return
 
-        self._server.upload_traffic += len(data)
+        self._server.add_upload(len(data))
         
         self._update_activity(len(data))
         if not is_local:
@@ -612,7 +613,7 @@ class TCPRelayHandler(object):
             self.destroy()
             return
 
-        self._server.download_traffic += len(data)
+        self._server.add_download(len(data))
 
         self._update_activity(len(data))
         if self._is_local:
@@ -725,7 +726,7 @@ class TCPRelayHandler(object):
         self._server.remove_handler(self)
 
 
-class TCPRelay(object):
+class TCPRelay(traffic_able.TrafficAble):
 
     def __init__(self, config, dns_resolver, is_local, stat_callback=None):
         self._config = config
@@ -741,9 +742,6 @@ class TCPRelay(object):
         # we trim the timeouts once a while
         self._timeout_offset = 0   # last checked position for timeout
         self._handler_to_timeouts = {}  # key: handler value: index in timeouts
-        
-        self.upload_traffic = 0L
-        self.download_traffic = 0L
 
         if is_local:
             listen_addr = config['local_address']

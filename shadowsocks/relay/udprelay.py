@@ -71,6 +71,7 @@ import random
 from shadowsocks import cryptor, common, shell
 from shadowsocks.event import eventloop
 from shadowsocks.cache import lru_cache
+from shadowsocks.trains import traffic_able
 from shadowsocks.common import parse_header, pack_addr, onetimeauth_verify, \
     onetimeauth_gen, ONETIMEAUTH_BYTES, ADDRTYPE_AUTH
 
@@ -83,7 +84,7 @@ def client_key(source_addr, server_af):
     return '%s:%s:%d' % (source_addr[0], source_addr[1], server_af)
 
 
-class UDPRelay(object):
+class UDPRelay(traffic_able.TrafficAble):
 
     def __init__(self, config, dns_resolver, is_local, stat_callback=None):
         self._config = config
@@ -118,9 +119,6 @@ class UDPRelay(object):
         self._sockets = set()
         self._forbidden_iplist = config.get('forbidden_ip')
         self._crypto_path = config['crypto_path']
-
-        self.upload_traffic = 0L
-        self.download_traffic = 0L
 
         addrs = socket.getaddrinfo(self._listen_addr, self._listen_port, 0,
                                    socket.SOCK_DGRAM, socket.SOL_UDP)
@@ -261,7 +259,7 @@ class UDPRelay(object):
             return
         try:
             client.sendto(data, (server_addr, server_port))
-            self.upload_traffic += len(data)
+            self.add_upload(len(data))
         except IOError as e:
             err = eventloop.errno_from_exception(e)
             if err in (errno.EINPROGRESS, errno.EAGAIN):
@@ -315,7 +313,7 @@ class UDPRelay(object):
             logging.debug("send udp response to %s:%d"
                           % (client_addr[0], client_addr[1]))
             self._server_socket.sendto(response, client_addr)
-            self.download_traffic += len(data)
+            self.add_download(len(data))
         else:
             # this packet is from somewhere else we know
             # simply drop that packet
