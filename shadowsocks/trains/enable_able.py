@@ -16,3 +16,10 @@ class EnableAble(object):
 
     def enable(self):
         self._switch_enable(True)
+
+    def get_enable(self):
+        self.enable_lock.acquire()
+        ret = self._enable
+        self.enable_lock.release()
+        return ret
+
