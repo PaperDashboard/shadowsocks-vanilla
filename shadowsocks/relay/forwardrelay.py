@@ -34,6 +34,7 @@ class ForwardRelay(threading.Thread, traffic_able.TrafficAble, enable_able.Enabl
         self._l_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._l_sock.bind(('', self.port))
         self._l_sock.listen(1024)
+        self.setDaemon(True)
 
     def run(self):
         helper_a, helper_b = None, None
@@ -45,6 +46,8 @@ class ForwardRelay(threading.Thread, traffic_able.TrafficAble, enable_able.Enabl
                 server_socket.connect((self.to, self.to_port))
                 helper_a = ForwardRelayHelper(client_socket, server_socket)
                 helper_b = ForwardRelayHelper(server_socket, client_socket)
+                helper_a.setDaemon(True)
+                helper_b.setDaemon(True)
                 helper_a.start()
                 helper_b.start()
         except Exception:

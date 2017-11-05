@@ -69,8 +69,7 @@ class ServerPool(object):
             os.exit(0)
 
     def server_is_run(self, user):
-        port = int(user.port)
-        if port in self.tcp_servers_pool:
+        if user.id in self.tcp_servers_pool:
             return True
         return False
 
@@ -78,7 +77,7 @@ class ServerPool(object):
         ret = True
         port = int(user.port)
 
-        if port in self.tcp_servers_pool:
+        if user.id in self.tcp_servers_pool:
             logging.info("server already at %s:%d" % (config.server, port))
             return 'this port server is already running'
         else:
@@ -95,10 +94,10 @@ class ServerPool(object):
                 logging.info("starting server at %s:%d" % (a_config['server'], port))
                 tcp_server = tcprelay.TCPRelay(a_config, self.dns_resolver, False)
                 tcp_server.add_to_loop(self.loop)
-                self.tcp_servers_pool[port] = tcp_server
+                self.tcp_servers_pool[user.id] = tcp_server
                 udp_server = udprelay.UDPRelay(a_config, self.dns_resolver, False)
                 udp_server.add_to_loop(self.loop)
-                self.udp_servers_pool.update({port: udp_server})
+                self.udp_servers_pool[user.id] = udp_server
             except Exception, e:
                 logging.warn(e)
         return True
@@ -106,33 +105,32 @@ class ServerPool(object):
     def del_server(self, user):
         port = int(user.port)
 
-        if port not in self.tcp_servers_pool:
+        if user.id not in self.tcp_servers_pool:
             logging.info("stopped server at %s:%d already stop" % (config.SERVER, port))
         else:
             logging.info("stopped server at %s:%d" % (config.SERVER, port))
+            # try:
             try:
-                server = self.tcp_servers_pool[port]
-                del self.tcp_servers_pool[port]
-                server.close()
-                userver = self.udp_servers_pool[port]
-                del self.udp_servers_pool[port]
-                userver.close()
+                self.tcp_servers_pool[user.id].close()
+                del self.tcp_servers_pool[user.id]
+                self.udp_servers_pool[user.id].close()
+                del self.udp_servers_pool[user.id]
             except Exception, e:
                 logging.warn(e)
             return True
 
-    def get_port_transfer(self, port):
+    def get_port_transfer(self, user):
         ret = 0L
         #this is different thread but safe
         t_servers = self.tcp_servers_pool.copy()
         u_servers = self.udp_servers_pool.copy()
 
-        if port in t_servers:
-            ret += t_servers[port].get_download()
-            ret += t_servers[port].get_upload()
+        if user.id in t_servers:
+            ret += t_servers[user.id].get_download()
+            ret += t_servers[user.id].get_upload()
 
-        if port in u_servers:
-            ret += u_servers[port].get_download()
-            ret += u_servers[port].get_upload()
+        if user.id in u_servers:
+            ret += u_servers[user.id].get_download()
+            ret += u_servers[user.id].get_upload()
 
         return ret
